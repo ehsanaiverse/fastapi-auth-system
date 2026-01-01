@@ -1,0 +1,21 @@
+*.pyc
+__pycache__/
+*.pyc
+env/
+venv/
+ENV/
+lib/
+lib64/
+
+
+# FastAPI
+.env
+.venv
+
+# Database
+*.db
+
+
+# IDE
+.vscode/
+.idea/
