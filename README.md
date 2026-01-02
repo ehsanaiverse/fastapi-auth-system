@@ -121,7 +121,7 @@ POST /forget
 ```
 
 ### Verify OTP and Reset Password
-```
+```json
 POST /verify-otp
 {
   "email": "ehsan@example.com",
@@ -132,7 +132,7 @@ POST /verify-otp
 
 ## 🏗️ Project Structure
 
-```
+```bash
 fastapi-auth-system/
 ├── main.py              # Application entry point
 ├── routers.py           # API route handlers
