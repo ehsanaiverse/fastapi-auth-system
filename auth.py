@@ -1,37 +1,51 @@
 from fastapi import HTTPException, Depends, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
+from sqlalchemy.orm import Session
 import bcrypt
 from random import randint
+
+from dependency import get_db
+from models import User
 
 
 SECRET_KEY = "This is my secret key"
 ALGORITHM = "HS256"
 
 # it used to get the token from the request header
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login") 
-
+# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login") 
+http_bearer = HTTPBearer()
 
 def create_token(data: dict):
-    return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
+    token = jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
+    return token
+
+
 
 # it used to get the current user from the token
-def get_current_user(token: str = Depends(oauth2_scheme)): # Depends is used to get the token from the request header
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(http_bearer),
+    db: Session = Depends(get_db)):
+    
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
+        headers={"Authenticate": "Bearer"},
     )
 
     try:
+        token = credentials.credentials
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email = payload.get("sub")
+        
         if email is None:
             raise credentials_exception
+        
+        return payload
+    
     except JWTError:
         raise credentials_exception
-
-    raise credentials_exception
+    
 
 
 

@@ -1,11 +1,16 @@
 from fastapi import HTTPException, Depends, APIRouter
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
+from datetime import datetime, timedelta
+from jose import JWTError, jwt
 
 from models import User
 from dependency import get_db
 from schemas import RegistorUsers, LoginUser, ChangePassword, ForgetPassword, VerifyOTP
-from auth import create_token, hashed_password, verify_password, gen_otp
+from auth import create_token, get_current_user, hashed_password, verify_password, gen_otp
+
+SECRET_KEY = "This is my secret key"
+ALGORITHM = "HS256"
 
 
 router = APIRouter()
@@ -49,29 +54,39 @@ def register(user: RegistorUsers, db: Session = Depends(get_db)):
 def login(user: LoginUser, db: Session = Depends(get_db)):
 
     # fitch data from the database
-    user_db = db.query(User).filter(
-        or_(
-            user.email == User.email,
-            user.email == User.username
-        )
-    ).first()
+    user_db = db.query(User).filter(User.email == user.email).first()
 
     # verify password 
-    if not user_db and verify_password(user.password, User.password):
+    if not user_db and verify_password(user.password, user_db.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     # creae token after password verifying
     # username,email, id
-    access_token = create_token(
-        data={
-            "sub": user_db.email
-            }
-    )
+    
+    payload = {
+        'sub': user_db.email,
+        'uid': user_db.id,
+        'username': user_db.username,
+        'exp': datetime.utcnow() + timedelta(hours=1)
+    }
+    token = create_token(data=payload)
+   
 
     return {
-        "access_token": access_token,
+        "access_token": token,
         "token_type": "bearer"
     }
+
+
+
+@router.get('/profile')
+def profile(current_user: dict = Depends(get_current_user)):
+    return {
+        "message": "Access granted",
+        "email": current_user["sub"],
+        "user_id": current_user["uid"]
+    }
+
 
 
 

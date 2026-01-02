@@ -26,3 +26,10 @@ class VerifyOTP(BaseModel):
     email: EmailStr
     otp: int
     new_password: str
+    
+    
+class Profile(BaseModel):
+    id: int
+    email: EmailStr
+    username: str
+    
